@@ -1,50 +1,60 @@
-const themeSlug = "ieee-sb-cek"; // Optional theme slug
+// Optional theme slug
+const themeSlug = "ieee-sb-cek";
 
 function clearForm(formId) {
   document.getElementById(formId).reset();
 }
 
+// Event listener for handling custom zoom level via postMessage
 window.addEventListener("message", (event) => {
   if (event?.data?.zoom) {
-    const mains = document.querySelectorAll('main');
+    const mains = document.querySelectorAll("main");
     for (const main of mains) {
-      main.style.zoom = event?.data?.zoom;
+      main.style.transform = `scale(${event.data.zoom})`;
+      main.style.transformOrigin = "0 0";
     }
   }
 }, false);
 
-document.addEventListener('DOMContentLoaded', () => {
-  // Wait for images and other resources to load before applying zoom
-  window.addEventListener('load', () => {
-    // Check if content width exceeds viewport width before hiding overflow
+document.addEventListener("DOMContentLoaded", () => {
+  // Ensure the page layout adapts to the viewport size
+  const applyResponsiveLayout = () => {
     const contentWidth = document.documentElement.scrollWidth;
     const viewportWidth = window.innerWidth;
 
     if (contentWidth > viewportWidth) {
       document.body.style.overflowX = "hidden";
     } else {
-      document.body.style.overflowX = "auto"; // Allow horizontal scrolling if needed
+      document.body.style.overflowX = "auto";
     }
+  };
 
-    function applyZoom() {
-      const vpTags = document.querySelectorAll('.yotako-main');
+  // Attach the resize handler
+  window.addEventListener("resize", applyResponsiveLayout);
 
-      for (const vp of vpTags) {
-        if (vp.offsetParent) {
-          const zoomClass = vp.classList.value.match(/size_(\d+)/)?.[1];
-          if (zoomClass) {
-            const closest = parseFloat(zoomClass);
-            vp.parentElement.style.setProperty('zoom', window.innerWidth / closest, 'important');
+  // Call the function on page load to ensure proper layout
+  applyResponsiveLayout();
 
-            // Consider using min-width instead of resetting margins and padding
-            vp.parentElement.style.minWidth = `${window.innerWidth}px`; // Ensure parent fills viewport width
-          }
+  // Fix any zoom-based issues dynamically
+  const adjustZoom = () => {
+    const vpTags = document.querySelectorAll(".yotako-main");
+    for (const vp of vpTags) {
+      if (vp.offsetParent) {
+        const zoomClass = vp.classList.value.match(/size_(\d+)/)?.[1];
+        if (zoomClass) {
+          const closest = parseFloat(zoomClass);
+          vp.parentElement.style.setProperty("transform", `scale(${window.innerWidth / closest})`, "important");
+          vp.parentElement.style.transformOrigin = "0 0";
+          vp.parentElement.style.minWidth = `${window.innerWidth}px`;
         }
       }
     }
+  };
 
-    window.onresize = applyZoom;
+  // Apply zoom adjustments on page load and resize
+  window.addEventListener("load", adjustZoom);
+  window.addEventListener("resize", adjustZoom);
 
-    applyZoom(); // Call applyZoom after resources are loaded
-  });
+  // Initial adjustments
+  adjustZoom();
 });
