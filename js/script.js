@@ -1,32 +1,50 @@
+const themeSlug = "ieee-sb-cek"; // Optional theme slug
+
+function clearForm(formId) {
+  document.getElementById(formId).reset();
+}
+
+window.addEventListener("message", (event) => {
+  if (event?.data?.zoom) {
+    const mains = document.querySelectorAll('main');
+    for (const main of mains) {
+      main.style.zoom = event?.data?.zoom;
+    }
+  }
+}, false);
+
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementsByTagName('body')[0].style.overflowX = "hidden";
+  // Wait for images and other resources to load before applying zoom
+  window.addEventListener('load', () => {
+    // Check if content width exceeds viewport width before hiding overflow
+    const contentWidth = document.documentElement.scrollWidth;
+    const viewportWidth = window.innerWidth;
 
-  function applyZoom() {
-    const vpTags = document.getElementsByClassName('yotako-main');
-    let closest;
-
-    for (let vp of vpTags) {
-      if (vp.offsetParent) {
-        vp.classList.forEach(c => {
-          if (c.includes('size_')) {
-            closest = c.split('_')[1];
-          }
-        });
-      }
+    if (contentWidth > viewportWidth) {
+      document.body.style.overflowX = "hidden";
+    } else {
+      document.body.style.overflowX = "auto"; // Allow horizontal scrolling if needed
     }
 
-    const zoom = window.innerWidth / closest;
-    // Apply zoom after loop
-    if (!isNaN(zoom)) {
-      for (let vp of vpTags) {
+    function applyZoom() {
+      const vpTags = document.querySelectorAll('.yotako-main');
+
+      for (const vp of vpTags) {
         if (vp.offsetParent) {
-          vp.parentElement.style.zoom = zoom;
+          const zoomClass = vp.classList.value.match(/size_(\d+)/)?.[1];
+          if (zoomClass) {
+            const closest = parseFloat(zoomClass);
+            vp.parentElement.style.setProperty('zoom', window.innerWidth / closest, 'important');
+
+            // Consider using min-width instead of resetting margins and padding
+            vp.parentElement.style.minWidth = `${window.innerWidth}px`; // Ensure parent fills viewport width
+          }
         }
       }
     }
-  }
 
-  window.onresize = applyZoom;
-  // Reduce the delay to a lower value (e.g., 10 milliseconds)
-  setTimeout(applyZoom, 1);
+    window.onresize = applyZoom;
+
+    applyZoom(); // Call applyZoom after resources are loaded
+  });
 });
